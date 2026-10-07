@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pregunta a Barbosa  - Estudio Médico De jose torres</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library for reading local PDF books client-side -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-700 text-white p-4 shadow-md">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide">Pregunta a Barbosa <span class="bg-blue-900 text-blue-200 text-xs px-2 py-0.5 rounded border border-blue-400">BETA</span></h1>
+                <p class="text-xs text-blue-100"></p>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <span class="text-xs font-semibold whitespace-nowrap"></span>
+                <input type="password" id="api-key" placeholder="" class="bg-blue-800 text-white placeholder-blue-300 text-xs px-3 py-1.5 rounded border border-blue-500 focus:outline-none focus:ring-1 focus:ring-white w-full sm:w-48">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl w-full mx-auto p-4 flex-1 grid md:grid-cols-12 gap-4">
+
+        <!-- Left Panel: Context & Books Input -->
+        <section class="md:col-span-5 bg-white p-4 rounded-lg shadow border border-slate-200 flex flex-col gap-4">
+            <h2 class="text-base font-bold text-blue-800 border-b border-slate-200 pb-2 flex items-center justify-between">
+                <span>1. Base de Conocimientos</span>
+                <span id="storage-status" class="text-[11px] font-normal text-slate-500">Local Memory</span>
+            </h2>
+
+            <!-- File Upload -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Cargar Libro :</label>
+                <input type="file" id="file-input" accept=".pdf,.txt" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded p-1">
+            </div>
+
+            <div class="text-center text-xs text-slate-400 font-bold my-[-4px]">— Ó —</div>
+
+            <!-- Manual Text Extract -->
+            <div class="flex-1 flex flex-col">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Pegar Extraccion de Texto:</label>
+                <textarea id="text-input" placeholder="Pega aquí el tema, capítulo o guía médica para que Barbosa estudie contigo..." class="w-full flex-1 min-h-[140px] p-2 text-xs border border-slate-300 rounded focus:outline-none focus:border-blue-500 bg-slate-50 resize-none"></textarea>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-2">
+                <button onclick="saveContext()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 px-3 rounded transition-colors shadow-sm">
+                    Guardar Texto
+                </button>
+                <button onclick="clearContext()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs py-2 px-3 rounded transition-colors">
+                    Borrar
+                </button>
+            </div>
+
+            <!-- Saved Status -->
+            <div id="saved-info" class="text-xs bg-blue-50 border border-blue-200 text-blue-800 p-2 rounded hidden">
+                <strong>Texto cargado:</strong> <span id="saved-length">0</span> caracteres disponibles.
+            </div>
+        </section>
+
+        <!-- Right Panel: Chat & Quick Actions -->
+        <section class="md:col-span-7 bg-white p-4 rounded-lg shadow border border-slate-200 flex flex-col gap-3">
+            <h2 class="text-base font-bold text-blue-800 border-b border-slate-200 pb-2">
+                2. Interacción con Barbosa
+            </h2>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex flex-wrap gap-2">
+                <button onclick="generateAction('enarm')" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-3 rounded transition-colors shadow-sm flex items-center justify-center gap-1">
+                    <span> Estudia para departamental</span>
+                </button>
+                <button onclick="generateAction('summary')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded transition-colors shadow-sm flex items-center justify-center gap-1">
+                    <span>Resumir Tema</span>
+                </button>
+            </div>
+
+            <!-- Chat Window -->
+            <div id="chat-box" class="flex-1 bg-slate-50 border border-slate-200 rounded p-3 overflow-y-auto min-h-[280px] max-h-[400px] flex flex-col gap-3">
+                <div class="bg-blue-100 text-blue-900 text-xs p-2.5 rounded max-w-[85%] self-start border border-blue-200">
+                    <strong>Barbosa:</strong> ¡Hola! Soy Barbosa. Sube un PDF o pega un texto de ayuda a la izquierda. Luego hazme preguntas o usa los botones rápidos de arriba.
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <form onsubmit="handleSend(event)" class="flex gap-2 pt-1">
+                <input type="text" id="chat-input" placeholder="Pregunta algo sobre el texto cargado..." class="flex-1 border border-slate-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded transition-colors shadow-sm">
+                    Enviar
+                </button>
+            </form>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 text-xs text-slate-500 bg-slate-200 border-t border-slate-300">
+        Pregunta a Barbosa  &bull; Modelo de Jose manuel para que se pongan pilas
+    </footer>
+
+    <script>
+        /* Configure PDF.js worker */
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Local State
+        let activeText = localStorage.getItem('barbosa_context') || '';
+
+        // Initialize UI State
+        window.addEventListener('DOMContentLoaded', () => {
+            if (activeText) {
+                document.getElementById('text-input').value = activeText;
+                updateSavedInfo();
+            }
+
+            document.getElementById('file-input').addEventListener('change', handleFileSelect);
+        });
+
+        // Handle PDF or TXT File Upload
+        async function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.type === "application/pdf") {
+                appendChatMessage("System", "Extrayendo texto del PDF...");
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    let extractedText = "";
+
+                    // Read up to 20 pages max for beta efficiency
+                    const maxPages = Math.min(pdf.numPages, 20);
+                    for (let i = 1; i <= maxPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        extractedText += content.items.map(item => item.str).join(" ") + "\n";
+                    }
+
+                    document.getElementById('text-input').value = extractedText;
+                    saveContext();
+                    appendChatMessage("Barbosa", `PDF "${file.name}" cargado con éxito (${maxPages} páginas).`);
+                } catch (err) {
+                    appendChatMessage("System", "Error al leer el archivo PDF.");
+                }
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('text-input').value = evt.target.result;
+                    saveContext();
+                    appendChatMessage("Barbosa", `Archivo TXT "${file.name}" cargado.`);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Save Context
+        function saveContext() {
+            activeText = document.getElementById('text-input').value.trim();
+            localStorage.setItem('barbosa_context', activeText);
+            updateSavedInfo();
+        }
+
+        // Clear Context
+        function clearContext() {
+            document.getElementById('text-input').value = '';
+            document.getElementById('file-input').value = '';
+            activeText = '';
+            localStorage.removeItem('barbosa_context');
+            updateSavedInfo();
+            appendChatMessage("System", "Base de conocimientos limpiada.");
+        }
+
+        function updateSavedInfo() {
+            const infoBox = document.getElementById('saved-info');
+            const lenSpan = document.getElementById('saved-length');
+            if (activeText) {
+                lenSpan.innerText = activeText.length;
+                infoBox.classList.remove('hidden');
+            } else {
+                infoBox.classList.add('hidden');
+            }
+        }
+
+        // Chat Submit
+        function handleSend(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = '';
+            appendChatMessage("Usuario", query);
+
+            processBarbosaResponse(query);
+        }
+
+        // Quick Action Buttons
+        function generateAction(type) {
+            if (!activeText) {
+                appendChatMessage("Barbosa", "⚠️ Por favor, primero carga un texto o PDF a la izquierda para poder analizarlo.");
+                return;
+            }
+
+            if (type === 'enarm') {
+                appendChatMessage("Usuario", "Genera un caso clínico tipo ENARM sobre el texto.");
+                processBarbosaResponse("Genera 1 caso clínico tipo ENARM basado estrictamente en el texto cargado, con 1 pregunta de opción múltiple (A, B, C, D) e indica la respuesta correcta explicada.");
+            } else if (type === 'summary') {
+                appendChatMessage("Usuario", "Resume el tema principal.");
+                processBarbosaResponse("Realiza un resumen estructurado y conciso en puntos clave (fisiopatología, clínica, diagnóstico y tratamiento) del texto cargado.");
+            }
+        }
+
+        // Core Response Engine (Gemini API or Fallback)
+        async function processBarbosaResponse(promptText) {
+            const apiKey = document.getElementById('api-key').value.trim();
+            const loadingId = appendChatMessage("Barbosa", "Pensando...");
+
+            // If API Key present, call Gemini 3 Flash Preview
+            if (apiKey) {
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                    
+                    const systemPrompt = "Eres Barbosa, un tutor médico inteligente, conciso y preciso que ayuda a estudiantes de medicina a repasar para sus exámenes y el ENARM.";
+                    const fullUserQuery = activeText 
+                        ? `CONTEXTO MÉDICO CARGADO:\n"""${activeText.substring(0, 4000)}"""\n\nPREGUNTA O INSTRUCCIÓN:\n${promptText}` 
+                        : promptText;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: fullUserQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo obtener una respuesta válida de la API.";
+                    
+                    updateChatMessage(loadingId, reply);
+                    return;
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            // Offline / Simulated Fallback Mode
+            setTimeout(() => {
+                let mockReply = "";
+                if (!activeText) {
+                    mockReply = " MODO SIMULADO / OFFLINE:\nNo has puesto una API Key de Joseph Server ni cargado texto. Por favor ingresa tu API Key o sube un texto para interactuar.";
+                } else if (promptText.includes("ENARM")) {
+                    mockReply = " MODO SIMULADO / OFFLINE (Caso ENARM):\n\nPaciente masculino de 45 años con antecedente de consumo de AINEs. Presenta epigastralgia punzante y melena.\n\n¿Cuál es el estudio de elección?\nA) Ultrasonido abdominal\nB) Endoscopia digestiva alta\nC) Tomografía computarizada\nD) Radiografía simple\n\nRespuesta Correcta: B (Endoscopia digestiva alta).";
+                } else if (promptText.includes("resumen")) {
+                    mockReply = " MODO SIMULADO / OFFLINE (Resumen):\n\n- Puntos Clave del Texto:\n  1. Identificación de factores de riesgo.\n  2. Cuadro clínico clásico y diagnóstico diferencial.\n  3. Manejo terapéutico de primera línea.";
+                } else {
+                    mockReply = ` MODO SIMULADO / OFFLINE:\nHe leído tu pregunta "${promptText}". Con base en los ${activeText.length} caracteres cargados, el tema principal aborda conceptos fundamentales de medicina. (Para respuestas inteligentes profundas, ingresa una API Key arriba).`;
+                }
+                updateChatMessage(loadingId, mockReply);
+            }, 600);
+        }
+
+        // UI Helpers for Chat
+        function appendChatMessage(sender, text) {
+            const chatBox = document.getElementById('chat-box');
+            const msgId = 'msg-' + Date.now() + Math.random().toString(36).substr(2, 4);
+
+            const div = document.createElement('div');
+            div.id = msgId;
+            
+            if (sender === 'Usuario') {
+                div.className = "bg-blue-600 text-white text-xs p-2.5 rounded max-w-[85%] self-end shadow-sm";
+                div.innerHTML = `<strong>Tú:</strong> ${escapeHtml(text)}`;
+            } else if (sender === 'Barbosa') {
+                div.className = "bg-white text-slate-800 text-xs p-2.5 rounded max-w-[85%] self-start border border-slate-200 shadow-sm whitespace-pre-wrap";
+                div.innerHTML = `<strong>Barbosa:</strong> ${escapeHtml(text)}`;
+            } else {
+                div.className = "bg-slate-200 text-slate-600 text-[11px] p-1.5 rounded self-center text-center w-full";
+                div.innerText = text;
+            }
+
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return msgId;
+        }
+
+        function updateChatMessage(msgId, text) {
+            const el = document.getElementById(msgId);
+            if (el) {
+                el.innerHTML = `<strong>Barbosa:</strong> ${escapeHtml(text)}`;
+                const chatBox = document.getElementById('chat-box');
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
